@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kim's Game - Adjectives</title>
+  <title>Kim's Game Challenge</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f7f6;
+      background-color: #f0f3f5;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -27,67 +27,87 @@
     }
 
     button {
-      background-color: #ff4757;
+      background-color: #007bff;
       color: white;
       border: none;
-      padding: 12px 24px;
-      font-size: 1.1rem;
+      padding: 12px 28px;
+      font-size: 1.2rem;
       font-weight: bold;
-      border-radius: 8px;
+      border-radius: 50px;
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transition: all 0.2s ease;
     }
 
     button:hover {
-      background-color: #ff6b81;
+      background-color: #0056b3;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
     }
 
     button:active {
-      transform: scale(0.98);
+      transform: translateY(2px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     button:disabled {
       background-color: #ccc;
       cursor: not-allowed;
       box-shadow: none;
+      transform: none;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 15px;
       width: 100%;
-      max-width: 900px;
+      max-width: 950px;
+      /* Necesario para la animación de reordenamiento */
+      position: relative; 
     }
 
     .card {
       background-color: white;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 20px 10px;
+      border: 1px solid #e0e6ed;
+      border-radius: 12px;
+      padding: 25px 10px;
       text-align: center;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #2c3e50;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #333;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      
+      /* Animaciones suaves para movimiento y desaparición */
+      transition: opacity 0.5s ease, transform 0.5s ease, order 0.5s ease;
+      
+      /* Asegura que el cambio de 'order' en flex/grid sea animable indirectamente */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Clase para desvanecer las palabras */
-    .hidden {
+    .card.hidden {
       opacity: 0;
-      visibility: hidden;
-      transform: scale(0.8);
+      transform: scale(0.5) rotate(15deg);
+      pointer-events: none; /* Evita interacciones */
+      /* Usamos display none tras la animación para que el grid se ajuste */
+      transition: opacity 0.5s ease, transform 0.5s ease, display 0s linear 0.5s; 
     }
+    
+    /* Estado final real para quitar el espacio en el grid */
+    .card.hidden.removed {
+        display: none;
+    }
+
   </style>
 </head>
 <body>
 
-  <h1>Kim's Game</h1>
+  <h1>Kim's Game: Adjectives</h1>
   
   <div class="controls">
-    <button id="vanish-btn">Vanish!</button>
+    <button id="vanish-btn">Mix & Vanish! ✨</button>
   </div>
 
   <div class="grid" id="word-grid"></div>
@@ -106,29 +126,72 @@
     const grid = document.getElementById("word-grid");
     const vanishBtn = document.getElementById("vanish-btn");
 
-    // Renderizar las palabras en la pantalla
-    adjectives.forEach((word) => {
+    // Función para barajar un array (Fisher-Yates shuffle)
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // 1. Barajar inicialmente la lista
+    const shuffledAdjectives = shuffle([...adjectives]);
+
+    // 2. Renderizar las palabras en la pantalla
+    shuffledAdjectives.forEach((word) => {
       const card = document.createElement("div");
       card.classList.add("card");
       card.textContent = word;
       grid.appendChild(card);
     });
 
-    // Evento del botón para desaparecer una palabra aleatoria por clic
+    // Evento del botón
     vanishBtn.addEventListener("click", () => {
+      // Bloquear botón temporalmente durante la animación
+      vanishBtn.disabled = true;
+
       const visibleCards = Array.from(document.querySelectorAll(".card:not(.hidden)"));
+      
+      if (visibleCards.length <= 1) return;
 
-      if (visibleCards.length > 1) {
-        // Seleccionar una tarjeta visible al azar
-        const randomIndex = Math.floor(Math.random() * visibleCards.length);
-        visibleCards[randomIndex].classList.add("hidden");
-      }
+      // --- PASO 1: Mezclar posiciones ---
+      // Creamos un array de índices y lo barajamos
+      const indices = Array.from({length: visibleCards.length}, (_, i) => i);
+      shuffle(indices);
 
-      // Deshabilitar el botón cuando solo quede 1 palabra
-      if (document.querySelectorAll(".card:not(.hidden)").length === 1) {
-        vanishBtn.disabled = true;
-        vanishBtn.textContent = "Last One Remaining!";
-      }
+      // Asignamos una nueva propiedad 'order' de CSS aleatoria a cada tarjeta
+      visibleCards.forEach((card, index) => {
+        card.style.order = indices[index];
+      });
+
+      // --- PASO 2: Desaparecer una palabra (después de un pequeño delay) ---
+      // Esperamos a que la animación de movimiento (0.5s) esté avanzada
+      setTimeout(() => {
+        // Seleccionar una tarjeta visible al azar de las que quedan
+        const cardToRemove = visibleCards[Math.floor(Math.random() * visibleCards.length)];
+        
+        // Iniciar animación de desaparición
+        cardToRemove.classList.add("hidden");
+
+        // Quitarla del layout completamente después de que termine su animación
+        setTimeout(() => {
+            cardToRemove.classList.add("removed");
+            
+            // Re-evaluar estado del juego
+            const remainingCards = document.querySelectorAll(".card:not(.hidden)");
+            
+            if (remainingCards.length > 1) {
+                // Reactivar botón si quedan más de una
+                vanishBtn.disabled = false;
+            } else {
+                // Fin del juego
+                vanishBtn.textContent = "Last One Standing!";
+                vanishBtn.style.backgroundColor = "#28a745"; // Verde final
+            }
+        }, 500); // Mismo tiempo que la transición CSS de .card
+
+      }, 300); // Retraso para que se vea el movimiento antes de desaparecer
     });
   </script>
 </body>
