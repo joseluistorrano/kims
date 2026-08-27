@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kim's Game - Adjectives</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      margin-bottom: 25px;
+    }
+
+    button {
+      background-color: #ff4757;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: #ff6b81;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .card {
+      background-color: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px 10px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2c3e50;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    /* Clase para desvanecer las palabras */
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.8);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Kim's Game</h1>
+  
+  <div class="controls">
+    <button id="vanish-btn">Vanish!</button>
+  </div>
+
+  <div class="grid" id="word-grid"></div>
+
+  <script>
+    // Tu lista de adjetivos
+    const adjectives = [
+      "tall", "short", "fast", "slow",
+      "pretty", "handsome", "young", "old",
+      "new", "high", "low", "cheap",
+      "expensive", "easy", "difficult", "good",
+      "bad", "right", "wrong", "hot",
+      "warm", "cold"
+    ];
+
+    const grid = document.getElementById("word-grid");
+    const vanishBtn = document.getElementById("vanish-btn");
+
+    // Renderizar las palabras en la pantalla
+    adjectives.forEach((word) => {
+      const card = document.createElement("div");
+      card.classList.add("card");
+      card.textContent = word;
+      grid.appendChild(card);
+    });
+
+    // Evento del botón para desaparecer una palabra aleatoria por clic
+    vanishBtn.addEventListener("click", () => {
+      const visibleCards = Array.from(document.querySelectorAll(".card:not(.hidden)"));
+
+      if (visibleCards.length > 1) {
+        // Seleccionar una tarjeta visible al azar
+        const randomIndex = Math.floor(Math.random() * visibleCards.length);
+        visibleCards[randomIndex].classList.add("hidden");
+      }
+
+      // Deshabilitar el botón cuando solo quede 1 palabra
+      if (document.querySelectorAll(".card:not(.hidden)").length === 1) {
+        vanishBtn.disabled = true;
+        vanishBtn.textContent = "Last One Remaining!";
+      }
+    });
+  </script>
+</body>
+</html>
